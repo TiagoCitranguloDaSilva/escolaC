@@ -3,7 +3,7 @@
 struct aluno{
     int ID;
     char nome[50];
-    char dataNascimento[10];
+    int dia, mes, ano;
     char curso[100];
     int anoIngresso;
     char telefone[11];
@@ -73,11 +73,11 @@ void cadastrarAlunos(){
 
     printf("Nome: ");
     scanf(" %[^\n]", a.nome);
-    printf("Data de nascimento (dd/mm/aaaa): ");
-    scanf(" %[^\n]", a.dataNascimento);
+    printf("Data de nascimento (dd mm aaaa): ");
+    scanf("%d %d %d", &a.dia, &a.mes, &a.ano);
     printf("Curso: ");
     scanf(" %[^\n]", a.curso);
-    printf("Ano de ingresso: ");
+    printf("Ano de ingressao: ");
     scanf("%d", &a.anoIngresso);
     printf("Telefone: ");
     scanf("%s", a.telefone);
@@ -107,17 +107,19 @@ void salvarAluno(struct aluno a){
     }
     fprintf(arquivoAluno, "ID: %d\n", a.ID);
     fprintf(arquivoAluno, "Nome: %s\n", a.nome);
-    fprintf(arquivoAluno, "Data de nascimento: %s\n", a.dataNascimento);
+    fprintf(arquivoAluno, "Data de nascimento: %02d/%02d/%04d\n", a.dia, a.mes, a.ano);
     fprintf(arquivoAluno, "Curso: %s\n", a.curso);
     fprintf(arquivoAluno, "Ano de ingresso: %d\n", a.anoIngresso);
     fprintf(arquivoAluno, "Telefone: %s\n", a.telefone);
     fprintf(arquivoAluno, "Endereco: %s\n", a.endereco);
+    fprintf(arquivoAluno, "---\n");
     fclose(arquivoAluno);
 }
+//TODO EDITAR ALUNO
 int main(){
-    // gerenciarContador(0);
-    // cadastrarAlunos();
-    // gerenciarContador(1);
-    consultarAlunos();
+    gerenciarContador(0);
+    cadastrarAlunos();
+    gerenciarContador(1);
+    // consultarAlunos();
     return 0;
 }
