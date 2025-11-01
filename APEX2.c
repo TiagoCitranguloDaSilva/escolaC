@@ -1,8 +1,11 @@
 #include <stdio.h> 
+#include <stdlib.h>
 
 #define MAX_NOMES 50
+
+//========================= Estrutura de Notas ==============================
 typedef struct {
-    int iaAluno;
+    int idAluno;
     char nomeAluno[MAX_NOMES];
     int idDisciplina;
     char nomeDisciplina[MAX_NOMES];
@@ -10,35 +13,75 @@ typedef struct {
 }Nota;
 Nota n;
 
-void ConsultarNotas() {// Implementacao da funcao ConsultarNotas
-    FILE *arquivo = fopen("notas.txt", "r");
-    if (arquivo == NULL) {
+
+
+//========================= Consultar Notas ==============================
+void ConsultarNotas() {
+    FILE *arquivoNotas = fopen("notas.txt", "r");
+    if (arquivoNotas == NULL) {
         printf("Erro ao abrir o arquivo de notas.\n");
         return;
     }
 
     printf("\n--- LISTA DE NOTAS ---\n");
 
-    while (fscanf(arquivo, "%d\n", &n.idAluno) ==1)
-        fgets(n.nomeAluno, MAX_NOMES, arquivo);
+    while (fscanf(arquivoNotas, "%d\n", &n.idAluno) ==1)
+        fgets(n.nomeAluno, MAX_NOMES, arquivoNotas);
         n.nomeAluno[strcspn(n.nomeAluno, "\n")] = 0; // Remover nova linha
 
-        fscanf(arquivo, "%d\n", &n.idDisciplina);
+        fscanf(arquivoNotas, "%d\n", &n.idDisciplina);
 
-        fgets(n.nomeDisciplina, MAX_NOMES, arquivo);
+        fgets(n.nomeDisciplina, MAX_NOMES, arquivoNotas);
         n.nomeDisciplina[strcspn(n.nomeDisciplina, "\n")] = 0; // Remover nova linha
         
-        fscanf(arquivo, "%f\n", &n.nota1);
+        fscanf(arquivoNotas, "%f\n", &n.nota1);
 
         printf("%s - %s - media= %f", n.nomeAluno, n.nomeDisciplina, n.nota1);
     {
-        fclose(arquivo);
+        fclose(arquivoNotas);
     }
     
 }
 
-int OpcaoMenuNota;
 
+
+
+//========================= abrir arquivo pela letra ==============================
+void abrirArquivosPorLetra() {
+    char letra;
+    char nomeArquivo[20];
+    FILE *arquivos;
+    char nome[100];
+    int id;
+
+    printf("Digite a letra inicial do nome do aluno: ");
+    scanf(" %c", &letra);
+
+    sprintf(nomeArquivo, "%c_notas.txt", letra);
+
+    arquivos = fopen(nomeArquivo, "r");
+    if (arquivos == NULL) {
+        printf("Arquivo nao encontrado para a letra %c.\n", letra);
+        return;
+    }
+    printf("\n--- lista de alunos com letra %c ---\n", letra);
+
+    while (fscanf(arquivo, "%d", &id) == 1) {
+        if (fgets(nome, sizeof(nome), arquivo) != NULL) {
+            nome[strcspn(nome, "\n")] = 0; // Remover nova linha
+            printf("ID: %d, Nome: %s\n", id, nome);
+        }
+    }
+    fclose(arquivos);
+    printf("\n--- Fim da lista ---\n");
+}    
+
+
+
+
+
+//========================= Menu de Notas ==============================
+int OpcaoMenuNota;
 int main() {
     while(OpcaoMenuNota !=4){
         printf("Menu de Notas:\n");
