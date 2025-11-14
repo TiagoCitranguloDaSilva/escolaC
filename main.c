@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #define MAX_DISCIPLINAS 50
-#define MAX_NOMES 50
 
 // Criação/Iniciação dos structs e variáveis necessárias
 
@@ -34,6 +33,8 @@ struct Nota
     char nomeAluno[100];
     int idDisciplina;
     char nomeDisciplina[100];
+    float nota1;
+    float nota2;
     float media;
 };
 struct Nota n;
@@ -58,7 +59,7 @@ void editar();
 
 void ConsultarNotas();
 void CadastrarNotas();
-int NotaJaCadastrada(int idAl, int idDisc);
+int NotaJaCadastrada(int idAl, int idDisc, int mostrarMsgErro);
 void ExcluirNotas();
 
 int contadorID = 0;
@@ -385,6 +386,11 @@ void cadastrarAlunos()
 
     // Atribui o id ao aluno
     a.ID = contadorID;
+
+    // Salva o id no txt
+    FILE *ultimoId = fopen("ultimo_id.txt", "w");
+    fprintf(ultimoId, "%i", contadorID);
+    fclose(ultimoId);
 
     // Pede as informações pro cadastro e as salva no aluno
     printf("=== CADASTRO DE ALUNOS ===\n");
@@ -954,12 +960,13 @@ void editar()
         getchar();
 
         // Caso escolha uma opção inválida
-        if(opcao < 1 || opcao > 3){
+        if (opcao < 1 || opcao > 3)
+        {
             printf("Opcao invalida, escolha novamente: \n");
         }
 
-    // Roda enquanto a escolha for inválida
-    }while(opcao < 1 || opcao > 3);
+        // Roda enquanto a escolha for inválida
+    } while (opcao < 1 || opcao > 3);
 
     // Altera o professor
     if (opcao == 1)
@@ -984,7 +991,6 @@ void editar()
     salvar();
 
     printf("disciplina editada com sucesso. TMJ!\n");
-
 }
 
 // Mostra as notas existentes
@@ -1003,23 +1009,25 @@ void ConsultarNotas()
         arquivoNotas = fopen("notas.txt", "r");
 
         // Caso aconteça um erro
-        if(arquivoNotas == NULL){
+        if (arquivoNotas == NULL)
+        {
             printf("Houve um erro ao tentar abrir o arquivo\n");
             return;
         }
-
     }
 
     printf("\n--- LISTA DE NOTAS ---\n");
 
     // Pega as linhas no arquivo de notas e coloca os valores no struct de notas, e verifica se todos os dados da disciplinas estão sendo pegos
     while (fscanf(arquivoNotas,
-                  "ID_ALUNO: %d; NOME_ALUNO: %[^;]; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %[^;]; MEDIA: %f\n",
+                  "ID_ALUNO: %d; NOME_ALUNO: %[^;]; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %[^;]; NOTA1: %f; NOTA2: %f; MEDIA: %f\n",
                   &n.idAluno,
                   n.nomeAluno,
                   &n.idDisciplina,
                   n.nomeDisciplina,
-                  &n.media) == 5)
+                  &n.nota1,
+                  &n.nota2,
+                  &n.media) == 7)
     {
 
         // Mostra os dados da nota atual do while
@@ -1030,7 +1038,6 @@ void ConsultarNotas()
     // Fecha o arquivo de notas
     fclose(arquivoNotas);
     printf("\n--- Fim da lista ---\n");
-
 }
 
 // Cadastra uma nova nota
@@ -1086,14 +1093,15 @@ void CadastrarNotas()
         printf("%s", linha);
     }
 
-    
-
     // Pede o id do aluno que tera sua nota cadastrada com base nas informações que foram mostradas na tela
     printf("Selecione o Aluno pelo numero de identificacao (ID): ");
     scanf("%d", &idAlunoSelecionado);
 
     // Salva o id do aluno no struct de notas
     n.idAluno = idAlunoSelecionado;
+
+    // Volta ao começo do arquivo
+    rewind(arquivoAluno);
 
     int idAtual, achou = 0;
     int dentro = 0;
@@ -1144,7 +1152,7 @@ void CadastrarNotas()
     // Pede pra escolher a disciplina pelo id
     printf("Selecione a disciplina pelo numero de identificacao (ID): ");
     scanf("%d", &idDisciplinaSelecionada);
-    
+
     // Salva o id da disciplina no struct de notas
     n.idDisciplina = idDisciplinaSelecionada;
 
@@ -1164,7 +1172,7 @@ void CadastrarNotas()
     while (fgets(bufferDisc, sizeof(bufferDisc), origemDisc))
     {
         struct Disciplina disc;
-        
+
         // Guarda os valores (id, professor, semestre e curso) no struct de disciplinas e guarda o nome da disciplina no struct de notas e ve se todos os valores estão sendo pegos
         if (sscanf(bufferDisc,
                    "ID: %d; NOME: %[^;]; PROFESSOR: %[^;]; SEMESTRE: %[^;]; CURSO: %[^\n]",
@@ -1193,12 +1201,10 @@ void CadastrarNotas()
         return;
     }
 
-    // Verifica se o aluno já tem uma nota cadastrada pra essa disciplina
-    if (NotaJaCadastrada(n.idAluno, n.idDisciplina))
+    // Verifica se o aluno já tem uma nota cadastrada pra essa disciplina, (ele passa o numero 1 pra mostrar uma mensagem de erro caso ache uma nota ja cadastrada)
+    if (NotaJaCadastrada(n.idAluno, n.idDisciplina, 1))
     {
-        printf("\nJa existe nota cadastrada para o aluno nesta disciplina.\n");
-        printf("Nota cadastrada: N1=%.2f, N2=%.2f, Media=%.2f\n",
-               nota1, nota2, n.media);
+
         return;
     }
 
@@ -1220,18 +1226,17 @@ void CadastrarNotas()
     }
 
     // Salva a nota no arquivo
-    fprintf(arquivoNotas, "ID_ALUNO: %d; NOME_ALUNO: %s; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %s; MEDIA: %.2f\n",
-            n.idAluno, n.nomeAluno, n.idDisciplina, n.nomeDisciplina, n.media);
+    fprintf(arquivoNotas, "ID_ALUNO: %d; NOME_ALUNO: %s; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %s; NOTA1: %.2F; NOTA2: %.2F; MEDIA: %.2f\n",
+            n.idAluno, n.nomeAluno, n.idDisciplina, n.nomeDisciplina, nota1, nota2, n.media);
 
     // Fecha o arquivo de notas
     fclose(arquivoNotas);
 
     printf("\nNota cadastrada com sucesso. Media final: %.2f\n", n.media);
-    
 }
 
 // Verifica se já existe uma nota cadastrada para aquele aluno naquela disciplina
-int NotaJaCadastrada(int idAl, int idDisc)
+int NotaJaCadastrada(int idAl, int idDisc, int mostrarMsgErro)
 {
 
     // Abre o arquivo de notas
@@ -1246,21 +1251,27 @@ int NotaJaCadastrada(int idAl, int idDisc)
     int existe = 0;
 
     // Roda por cada linha do arquivo, pega os 5 valores e coloca no struct nota de valores temporarios
-    while (fscanf(arquivoNotas, "ID_ALUNO: %d; NOME_ALUNO: %[^;]; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %[^;]; MEDIA: %f\n",
+    while (fscanf(arquivoNotas, "ID_ALUNO: %d; NOME_ALUNO: %[^;]; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %[^;]; NOTA1: %f; NOTA2: %f; MEDIA: %f\n",
                   &tempNota.idAluno,
-                  &tempNota.nomeAluno,
+                  tempNota.nomeAluno,
                   &tempNota.idDisciplina,
-                  &tempNota.nomeDisciplina,
-                  &tempNota.media) == 5)
+                  tempNota.nomeDisciplina,
+                  &tempNota.nota1,
+                  &tempNota.nota2,
+                  &tempNota.media) == 7)
     {
 
         // Se já existir uma nota para o aluno sendo verificado na disciplina sendo verificada
         if (tempNota.idAluno == idAl && tempNota.idDisciplina == idDisc)
         {
 
-            // Fala que já existe e sai
+            // Se for pra mostrar uma mensagem de erro
+            if(mostrarMsgErro == 1){
+                printf("\nJa existe nota cadastrada para o aluno nesta disciplina.\n");
+                printf("Nota cadastrada: N1=%.2f, N2=%.2f, Media=%.2f\n",
+                       tempNota.nota1, tempNota.nota2, tempNota.media);
+            }
             existe = 1;
-            break;
         }
     }
 
@@ -1327,6 +1338,9 @@ void ExcluirNotas()
 
     // Salva o id do aluno no struct de nota
     n.idAluno = idAlunoSelecionado;
+
+    // Volta ao começo do arquivo
+    rewind(arquivoAluno);
 
     int idAtual, achou = 0;
     int dentro = 0;
@@ -1431,8 +1445,8 @@ void ExcluirNotas()
         return;
     }
 
-    // Verifica se existe uma nota para ser excluída
-    if (!NotaJaCadastrada(n.idAluno, n.idDisciplina))
+    // Verifica se existe uma nota para ser excluída, (ele passa 0 como paramentro pra dizer que não deve mostrar uma mensagem de erro caso ache uma nota ja cadastrada)
+    if (!NotaJaCadastrada(n.idAluno, n.idDisciplina, 0))
     {
         // Caso a nota não exista
         printf("\nNao existia nota cadastrada para excluir para o Aluno ID %d na Disciplina ID %d.\n",
@@ -1464,19 +1478,21 @@ void ExcluirNotas()
     int removido = 0;
 
     // Roda por cada linha do arquivo de notas enquanto salva os valores no struct de notas temporárias
-    while (fscanf(arquivoOriginal, "ID_ALUNO: %d; NOME_ALUNO: %[^;]; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %[^;]; MEDIA: %f\n",
+    while (fscanf(arquivoOriginal, "ID_ALUNO: %d; NOME_ALUNO: %[^;]; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %[^;]; NOTA1: %f; NOTA2: %f; MEDIA: %f\n",
                   &tempNota.idAluno,
                   tempNota.nomeAluno,
                   &tempNota.idDisciplina,
                   tempNota.nomeDisciplina,
-                  &tempNota.media) == 5)
+                  &tempNota.nota1,
+                  &tempNota.nota2,
+                  &tempNota.media) == 7)
     {
 
         // Se a nota for diferente da que será excluída, ela será copiada para o arquivo temporário
         if (!(tempNota.idAluno == idAlunoSelecionado && tempNota.idDisciplina == idDisciplinaSelecionada))
         {
-            fprintf(arquivoTemporario, "ID_ALUNO: %d; NOME_ALUNO: %s; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %s; MEDIA: %.2f\n",
-                    tempNota.idAluno, tempNota.nomeAluno, tempNota.idDisciplina, tempNota.nomeDisciplina, tempNota.media);
+            fprintf(arquivoTemporario, "ID_ALUNO: %d; NOME_ALUNO: %s; ID_DISCIPLINA: %d; NOME_DISCIPLINA: %s; NOTA1: %.2F; NOTA2: %.2F; MEDIA: %.2f\n",
+                    tempNota.idAluno, tempNota.nomeAluno, tempNota.idDisciplina, tempNota.nomeDisciplina, tempNota.nota1, tempNota.nota2, tempNota.media);
         }
         // Se for a nota que será excluída, ela não será copiada para o arquivo temporário
         else
@@ -1494,7 +1510,7 @@ void ExcluirNotas()
     if (removido)
     {
         // Apaga o arquivo de notas
-        remove("notas.txt");            
+        remove("notas.txt");
 
         // Renomeia o arquivo temporário de notas para "notas.txt"
         rename("temp_notas.txt", "notas.txt");
@@ -1513,7 +1529,10 @@ void ExcluirNotas()
 
 int main()
 {
+    // Inicia o contador de ids
     gerenciarContador();
+
+    // Começa mostrando o menu inicial
     menuInicial();
     return 0;
 }
